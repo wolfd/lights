@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Edit Dem Lights</title>
+<style type="text/css" media="screen">
+    #editor {
+        width: 800px;
+        height: 600px;
+    }
+</style>
+</head>
+<body>
+
+<div id="editor">
+</div>
+<input type="button" id="saveButton" value="Save & Run" />
+<script src="jquery.js" type="text/javascript" charset="utf-8"></script>
+<script src="ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    function getParam(name) {
+        var paramStr = window.location.search.substr(1);
+        var paramArr = paramStr.split("&");
+        for(var i=0; i<paramArr.length; i++){
+            var pair = paramArr[i].split('=');
+            if(pair[0] == name) {
+                return pair[1];
+            }
+        }
+    }
+
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.getSession().setMode("ace/mode/python");
+    var script = getParam('name');
+    var uri = './pattern/get_pattern?name=' + script;
+
+    $.get(uri, function(data) {
+        editor.getSession().setValue(data);
+    });
+
+    $('#saveButton').click(function() {
+        var uri = './pattern/save_pattern';
+        $.post(uri, {'name': script, 'text': editor.getSession().getValue()}, function(){
+            $.get('./pattern/run_pattern?name=' + script);
+        });
+    });
+
+
+</script>
+</body>
+</html>
