@@ -6,6 +6,7 @@ import threading
 import subprocess
 import os
 import decorators
+import time
 
 def get_sinks():
     proc = subprocess.Popen(['pacmd', 'list-sinks'], stdout=subprocess.PIPE)
@@ -16,6 +17,44 @@ def get_sinks():
         if line.startswith('name:'):
             devs.append(line[5:].strip()[1:-1].strip())
     return devs
+
+def get_window(pid):
+    env = dict(os.environ)
+    env['DISPLAY'] = ':0'
+    proc = subprocess.Popen(['xdotool', 'search', '--sync', '--pid', str(pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, env=env)
+    return int(proc.communicate()[0].strip().split('\n')[-1])
+
+def get_active_window():
+    env = dict(os.environ)
+    env['DISPLAY'] = ':0'
+    proc = subprocess.Popen(['xdotool', 'getactivewindow'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, env=env)
+    return int(proc.communicate()[0].strip().split('\n')[-1])
+
+def set_active_window(window):
+    env = dict(os.environ)
+    env['DISPLAY'] = ':0'
+    window = str(window)
+    proc = subprocess.Popen(['xdotool',
+        'windowactivate', window,
+        'windowfocus', window],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, env=env)
+    proc.communicate()
+
+def start_visual(window):
+    env = dict(os.environ)
+    env['DISPLAY'] = ':0'
+    window = str(window)
+    proc = subprocess.Popen(['xdotool', 
+        'set_desktop_for_window', window, '1',
+        'windowactivate', window,
+        'windowfocus', window,
+        'key', 'ctrl+n'], env=env)
+    proc.wait()
 
 class Manager(object):
     """
@@ -60,7 +99,11 @@ class Manager(object):
             self.strip = strip
             env = dict(os.environ)
             env['DISPLAY'] = ':0'
+            cur_win = get_active_window()
             proc = subprocess.Popen(['/usr/bin/projectM-pulseaudio'], env=env)
             self.proc = proc
+            window = get_window(proc.pid)
+            start_visual(window)
+            set_active_window(cur_win)
         finally:
             self.lock.release()
