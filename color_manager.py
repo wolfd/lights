@@ -21,6 +21,13 @@ class Manager(object):
         self.lock.release()
         
     @decorators.expose(output=None)
+    def set_color_hex(self, hexrgb):
+        """
+            Because Josh thinks in webdev.
+        """
+        self.set_color(*[int(hexrgb[i*2:i*2+2], 16) for i in range(3)])        
+        
+    @decorators.expose(output=None)
     def set_color(self, red, green, blue):
         """
             Sets the strip to an RGB color.

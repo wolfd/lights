@@ -38,7 +38,6 @@ class PatternRunner(object):
             if self.proc and self.proc.is_alive():
                 os.kill(self.proc.pid, 9)
                 self.thread.join()
-                self.ended = time.time()
         finally:
             self.lock.release()
 
@@ -77,6 +76,7 @@ class PatternRunner(object):
             else:
                 col_tuple = col_queue.get()
                 set_color(*col_tuple)
+        self.ended = time.time()
         if proc.exitcode == 2:
             self.err_info = ret_queue.get()
         elif proc.exitcode <= 0:

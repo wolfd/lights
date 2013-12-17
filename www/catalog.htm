@@ -5,18 +5,80 @@
         <script src="jquery.js" type="text/javascript" charset="utf-8"></script>
     </head>
     <body>
+        Patterns:
         <ul id="patternList"></ul>
+        Pattern Status:
+        <pre id="patternStatus" style="border:1px solid #000"></pre>
+        <hr />
+        <input type="button" id="visButton" value="Enable Music Visualizer" /><br \>
+        <hr />
+        Set a solid color
+        <div id="solidColorBg" style="border: 1px solid #000">
+        R=<input type="text" id="cr" value="0" />
+        G=<input type="text" id="cg" value="254" />
+        B=<input type="text" id="cb" value="0" />
+        <input type="button" id="colorButton" value="Set" /></div>
+        
         <script type="text/javascript">
+            $('#visButton').click(function() {
+                $.get('./audio/start_visualizer');
+            });
+            $('#colorButton').click(function() {
+                var r = $('#cr').val();
+                var g = $('#cg').val();
+                var b = $('#cb').val();
+                $.get('./color/set_color?red=' + r + '&green=' + g + '&blue=' +b);
+            });
+            function testCol() {
+                var r = $('#cr').val();
+                var g = $('#cg').val();
+                var b = $('#cb').val();
+                var e = document.getElementById('solidColorBg');
+                e.style.backgroundColor = 'rgb('+r+','+g+','+b+')';
+            }
+            testCol();
+            $('#cr').keyup(testCol);
+            $('#cg').keyup(testCol);
+            $('#cb').keyup(testCol);
+            $('#cr').change(testCol);
+            $('#cg').change(testCol);
+            $('#cb').change(testCol);
+            
+            function runpattern(name) {
+                $.get('./pattern/run_pattern?name=' + name);
+            }
+            
+            
+            
+            function onPatternStatus(data) {
+                $('#patternStatus').text(data);
+                setTimeout(triggerStatusUpdate, 1000);
+            }
+            
+            function triggerStatusUpdate() {
+                $.get('./pattern/get_status', onPatternStatus);
+            }
+            
+            triggerStatusUpdate();
+        
             var ul = document.getElementById('patternList');
             $.get('./pattern/list_patterns', function(patterns) {
                 patterns.sort();
                 for(var i=0; i<patterns.length; i++) {
                     var name = patterns[i];
+                    var li = document.createElement('li');
+                    li.appendChild(document.createTextNode(name + ' '));
                     var a = document.createElement('a');
                     a.href = 'edit.htm?name=' + name;
-                    a.appendChild(document.createTextNode(name));
-                    var li = document.createElement('li');
+                    a.appendChild(document.createTextNode('Edit'));
                     li.appendChild(a);
+                    li.appendChild(document.createTextNode(' '));
+                    a = document.createElement('a');
+                    a.href = 'javascript:runpattern("' + name + '")';
+                    
+                    a.appendChild(document.createTextNode('Run'));
+                    li.appendChild(a);
+                    li.appendChild(document.createTextNode(' '));
                     ul.appendChild(li);
                 }
             });

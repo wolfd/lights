@@ -18,13 +18,15 @@ def get_sinks():
             devs.append(line[5:].strip()[1:-1].strip())
     return devs
 
-def get_window(pid):
+def get_windows(pid):
     env = dict(os.environ)
     env['DISPLAY'] = ':0'
     proc = subprocess.Popen(['xdotool', 'search', '--sync', '--pid', str(pid)],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, env=env)
-    return int(proc.communicate()[0].strip().split('\n')[-1])
+    stdout = proc.communicate()[0]
+    lines = stdout.strip().split('\n')[1:]
+    return [int(line) for line in lines]
 
 def get_active_window():
     env = dict(os.environ)
@@ -49,11 +51,11 @@ def start_visual(window):
     env = dict(os.environ)
     env['DISPLAY'] = ':0'
     window = str(window)
-    proc = subprocess.Popen(['xdotool', 
-        'set_desktop_for_window', window, '1',
+    proc = subprocess.Popen(['xdotool',
         'windowactivate', window,
         'windowfocus', window,
-        'key', 'ctrl+n'], env=env)
+        'key', 'ctrl+n',
+        'set_desktop_for_window', window, '1'], env=env)
     proc.wait()
 
 class Manager(object):
@@ -102,7 +104,12 @@ class Manager(object):
             cur_win = get_active_window()
             proc = subprocess.Popen(['/usr/bin/projectM-pulseaudio'], env=env)
             self.proc = proc
-            window = get_window(proc.pid)
+            windows = []
+            while len(windows) < 3:
+                windows = get_windows(proc.pid)
+                print windows
+                time.sleep(.1)
+            window = windows[-1]
             start_visual(window)
             set_active_window(cur_win)
         finally:
