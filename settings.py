@@ -3,7 +3,7 @@
 """
 
 # The path to the serial device to use
-SERIAL_DEV = '/dev/ttyUSB0'
+SERIAL_DEV = '/dev/arduino'
 
 # The path to the directory where patterns should be stored
 PATTERN_DIR = '/home/hackhouse/ledcontrol/patterns/'
