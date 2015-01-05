@@ -3,7 +3,9 @@ import serial
 import threading
 import traceback
 import time
+import logging
 
+LOG = logging.getLogger('ledcontrol')
 
 class Strip(object):
     def __init__(self, dev):
@@ -29,11 +31,11 @@ class Strip(object):
                 self.conn.flush()
                 return
             except Exception:
-                print 'Error setting color:\n%s' % traceback.format_exc()
+                LOG.warning('Error setting color:\n%s', traceback.format_exc())
                 try:
                     self.connect()
                 except Exception:
-                    print 'Error reconnecting: %s' % traceback.format_exc()
+                    LOG.warning('Error reconnecting: %s', traceback.format_exc())
                     time.sleep(1)
 
     def close(self):
