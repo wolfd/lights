@@ -9,6 +9,8 @@ import inspect
 import json
 import os
 import threading
+import logging
+from subprocess import Popen, PIPE
 
 # external modules
 import cherrypy
@@ -19,6 +21,9 @@ import settings
 
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
 WWW_DIR = os.path.join(SERVER_DIR, 'www')
+
+LOG = logging.getLogger('ledcontrol')
+
 
 def mimetype(mimeval):
     """
@@ -195,6 +200,15 @@ class LedControlServer(object):
     @cherrypy.expose
     def index(self):
         raise cherrypy.HTTPRedirect("/lights/catalog.htm", 302)
+        
+    @cherrypy.expose
+    def log(self):
+        proc = Popen(['tail', '-n', '500', os.path.join(SERVER_DIR, 'app.log')], stdout=PIPE, stderr=PIPE)
+        stdout, stderr = proc.communicate()
+        if proc.returncode != 0:
+            raise Exception(stderr)
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return stdout
 
     def get_strip(self):
         """
@@ -215,6 +229,11 @@ class LedControlServer(object):
             raise AttributeError('No dispatcher named "%s"' % name)
 
 if __name__ == '__main__':
+    cp_logger = logging.getLogger('cherrypy')
+    cp_logger.addHandler(logging.FileHandler('./cherrpy.log'))
+    other_logger = logging.getLogger('ledcontrol')
+    other_logger.addHandler(logging.FileHandler('./app.log'))
+
     cherrypy.config.update({
         'engine.autoreload.on': False,
         'server.socket_host': '0.0.0.0',
