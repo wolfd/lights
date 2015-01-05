@@ -48,9 +48,10 @@ class PatternRunner(object):
         cherrypy.engine.signal_handler.unsubscribe()
         cherrypy.server.unsubscribe()
         
-        locs = locals()
-        globs = globals()
-        globs['set_color'] = lambda r, g, b: col_queue.put((r, g, b))
+        locs = locals().copy()
+        globs = globals().copy()
+        fix = lambda x: min(255, max(0, int(x)))
+        globs['set_color'] = lambda r, g, b: col_queue.put((fix(r), fix(g), fix(b)))
         try:
             exec pattern in globs, locs
         except Exception:
