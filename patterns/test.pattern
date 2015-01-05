@@ -1,5 +1,6 @@
 
 raise Exception('fuuuu')
 
+#cool
 
 set_color(50, 50, 50)
