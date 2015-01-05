@@ -192,6 +192,10 @@ class LedControlServer(object):
             self.managers[name] = manager
             self.dispatchers[name] = ManagerDispatcher(self, name, manager)
 
+    @cherrypy.expose
+    def index(self):
+        raise cherrypy.HTTPRedirect("/lights/catalog.htm", 302)
+
     def get_strip(self):
         """
             Releases the strip from all managers
