@@ -1,0 +1,18 @@
+from viz import viz_data, avg
+
+MULTIPLIERS = [1,.5,.1,.5,.5,.5,.4, 1,2,3,2,2]
+
+prev_maxes = [0 for n in range(10)]
+
+for fft_avgs in viz_data():
+    cur_max = max(fft_avgs)
+    prev_maxes.pop(0)
+    prev_maxes.append(cur_max)
+    mx = sum(prev_maxes)/10 or 1
+    fft_avgs = [min(1.0,x/mx * MULTIPLIERS[i]) for i,x in enumerate(fft_avgs)]
+    
+    bass = avg(fft_avgs[1:4])
+    mid = avg(fft_avgs[4:7])
+    treb = avg(fft_avgs[7:])
+    
+    set_color(int(bass * 255), int(mid * 255), int(treb * 255))

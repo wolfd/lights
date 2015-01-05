@@ -1,0 +1,83 @@
+
+import spidermonkey
+import time
+import random
+
+rt = spidermonkey.Runtime()
+cx = spidermonkey.Context(rt)
+
+cx.add_global('sleep', time.sleep)
+cx.add_global('setColor', set_color)
+cx.add_global('randInt', random.randint)
+cx.add_global('toInt', int)
+
+def log(text):
+    print text
+    
+cx.add_global('log', log)
+
+cx.execute('''
+
+function randColor() {
+    return randInt(0, 255);
+}
+
+function randRGB() {
+    return [randColor(), randColor(), randColor()];
+}
+
+function min(a, b) {
+    if (a < b)
+        return a;
+    else
+        return b;
+}
+
+function max(a, b) {
+    if(a > b) {
+        return a;
+    }
+    else {
+        return b;
+    }
+}
+
+function fadeTo(rgb1, rgb2, interval) {
+    var r1 = rgb1[0];
+    var g1 = rgb1[1];
+    var b1 = rgb1[2];
+    var r2 = rgb2[0];
+    var g2 = rgb2[1];
+    var b2 = rgb2[2];
+    
+    var rdiff = r2 - r1;
+    var gdiff = g2 - g1;
+    var bdiff = b2 - b1;
+    
+    var steps = max(20, max(rdiff, max(gdiff, bdiff)));
+    var rstep = rdiff/steps;
+    var gstep = gdiff/steps;
+    var bstep = bdiff/steps;
+    
+    for(var i=0; i<steps; i++) {
+        r1 += rstep;
+        g1 += gstep;
+        b1 += bstep;
+        setColor(toInt(r1), toInt(g1), toInt(b1));
+        sleep(interval);
+    }
+    setColor(r2, g2, b2);
+    sleep(interval);
+}
+
+var start = randRGB();
+setColor(start[0], start[1], start[2]);
+var last;
+var next = start;
+
+while(true) {
+    last = next;
+    next = randRGB();
+    fadeTo(last, next, .05);
+}
+''')

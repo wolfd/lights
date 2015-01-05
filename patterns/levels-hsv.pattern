@@ -1,0 +1,41 @@
+from viz import viz_data, avg
+import sys
+import colorsys
+
+MULTIPLIERS = [1,.5,.1,.5,.5,.5,.4,1,2,3,2,2]
+
+prev_maxes = [0 for n in range(10)]
+
+prev_bass = [0 for n in range(10)]
+prev_mid = [0 for n in range(10)]
+prev_treb = [0 for n in range(10)]
+
+fuck = .4
+prev = lambda a,v: (a.pop(0),a.append(v))
+
+for fft_avgs in viz_data():
+    cur_max = max(fft_avgs)
+    prev_maxes.pop(0)
+    prev_maxes.append(cur_max)
+    
+    mx = sum(prev_maxes)/10 or 1
+    fft_avgs = [min(1.0,x/mx * MULTIPLIERS[i]) for i,x in enumerate(fft_avgs)]
+    
+    # BASS
+    bass = avg(fft_avgs[1:4])
+    prev(prev_bass, bass)
+    bass = avg([3/(len(prev_bass) - (i * fuck)) * x for i,x in enumerate(prev_bass)])
+    
+    # MID
+    mid = avg(fft_avgs[4:7])
+    prev(prev_mid, mid)
+    mid = avg([3/(len(prev_mid) - (i * fuck)) * x for i,x in enumerate(prev_mid)])
+    
+    # TREB
+    treb = avg(fft_avgs[7:])
+    prev(prev_treb, treb)
+    treb = avg([3/(len(prev_treb) - (i * fuck)) * x for i,x in enumerate(prev_treb)])
+    
+    r, g, b = colorsys.hsv_to_rgb(0.2+(treb+mid)*2.0, 1.0-mid, max(0.01,bass))
+    
+    set_color(r * 255, g * 255, b * 255)

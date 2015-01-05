@@ -1,0 +1,21 @@
+import spidermonkey
+import time
+
+rt = spidermonkey.Runtime()
+cx = spidermonkey.Context(rt)
+
+cx.add_global('sleep', time.sleep)
+cx.add_global('setColor', set_color)
+
+cx.execute('''
+
+while(true) {
+    setColor(255, 0, 0);
+    sleep(.25)
+    setColor(255, 255, 255)
+    sleep(.25)
+    setColor(0, 0, 255)
+    sleep(.25)
+}
+
+''')

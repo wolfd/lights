@@ -1,0 +1,17 @@
+import time
+import random
+
+STEPS = range(255)
+
+lastcol = 2
+col = 2
+while True:
+    while col == lastcol:
+        col = random.randint(0, 2)
+    for val in STEPS:
+        rgb = [0, 0, 0]
+        rgb[col] = val
+        rgb[lastcol] = 254 - val
+        set_color(*rgb)
+        time.sleep(.03)
+    lastcol = col

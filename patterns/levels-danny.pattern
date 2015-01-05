@@ -1,0 +1,40 @@
+from viz import viz_data, avg
+import sys
+
+MULTIPLIERS = [1,.5,.1,.5,.5,.5,.4, 1,2,3,2,2]
+
+prev_maxes = [0 for n in range(10)]
+
+prev_bass = [0 for n in range(10)]
+prev_mid = [0 for n in range(10)]
+prev_treb = [0 for n in range(10)]
+
+fuck = .4
+
+for fft_avgs in viz_data():
+    cur_max = max(fft_avgs)
+    prev_maxes.pop(0)
+    prev_maxes.append(cur_max)
+    mx = sum(prev_maxes)/10 or 1
+    fft_avgs = [min(1.0,x/mx * MULTIPLIERS[i]) for i,x in enumerate(fft_avgs)]
+    
+    # BASS
+    bass = avg(fft_avgs[1:4])
+    prev_bass.pop(0)
+    prev_bass.append(bass)
+    bass = avg([3/(len(prev_bass) - (i * fuck)) * x for i,x in enumerate(prev_bass)])
+    bass_i = int(min(bass * 1000, 255))
+    # MID
+    mid = avg(fft_avgs[4:7])
+    prev_mid.pop(0)
+    prev_mid.append(mid)
+    mid = avg([3/(len(prev_mid) - (i * fuck)) * x for i,x in enumerate(prev_mid)])
+    mid_i = int(min(mid * 1000, 255))
+    # TREB
+    treb = avg(fft_avgs[7:])
+    prev_treb.pop(0)
+    prev_treb.append(treb)
+    treb = avg([3/(len(prev_treb) - (i * fuck)) * x for i,x in enumerate(prev_treb)])
+    treb_i = int(min(treb * 1000, 255))
+    
+    set_color(bass_i, mid_i/4, treb_i/4)#int(mid * 255), int(treb * 255))
