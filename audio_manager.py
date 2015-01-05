@@ -73,7 +73,7 @@ class Manager(object):
             Releases the strip
         """
         self.lock.acquire()
-        if self.proc and self.proc.poll() is None:
+        if self.proc:
             self.proc.kill()
             self.proc.wait()
             self.strip.connect()

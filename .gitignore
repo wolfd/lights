@@ -2,3 +2,5 @@
 *.pattern
 *.swp
 *.pyc
+*.log
+*.err
