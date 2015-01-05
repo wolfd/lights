@@ -2,7 +2,7 @@
 
 echo Killing running LED control script
 
-pkill -15 ledcontrol.py
+pkill -9 ledcontrol
 pkill -9 projectM-pulseaudio
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
