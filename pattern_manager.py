@@ -10,9 +10,22 @@ import sys
 import threading
 import time
 import traceback
+from subprocess import Popen, PIPE
 
 import decorators
 import settings
+
+
+def git(*args):
+    git_dir = os.path.join(settings.PATTERN_DIR, '.git')
+    cmd = ['git', '--git-dir', git_dir]
+    cmd.extend(args)
+    proc = Popen(cmd, cwd=settings.PATTERN_DIR + '/', stdout=PIPE, stderr=PIPE)
+    stdout, stderr = proc.communicate()
+    if proc.returncode != 0:
+        raise Exception(stderr)
+    return stdout
+
 
 class PatternRunner(object):
     """
@@ -175,6 +188,13 @@ class Manager(object):
             path = os.path.join(settings.PATTERN_DIR, name+'.pattern')
             with open(path, 'w') as fobj:
                 fobj.write(text)
+            try:
+                git('status')
+            except Exception:
+                git('init')
+            git('reset')
+            git('add', path)
+            git('commit', '-m', 'updated pattern "%s"' % name)
         finally:
             self.lock.release()
 
