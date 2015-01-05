@@ -1,6 +1,6 @@
 *~
-*.pattern
 *.swp
 *.pyc
 *.log
 *.err
+patterns
