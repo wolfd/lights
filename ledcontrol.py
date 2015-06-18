@@ -14,6 +14,8 @@ from subprocess import Popen, PIPE
 
 # external modules
 import cherrypy
+from ws4py.websocket import WebSocket
+from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 
 # project modules
 import rgbled
@@ -210,6 +212,10 @@ class LedControlServer(object):
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         return stdout
 
+    @cherrypy.expose
+    def ws(self):
+        handler = cherrypy.request.ws_handler
+
     def get_strip(self):
         """
             Releases the strip from all managers
@@ -228,6 +234,26 @@ class LedControlServer(object):
         else:
             raise AttributeError('No dispatcher named "%s"' % name)
 
+class LedWebSocket(WebSocket):
+    def opened(self):
+        f = lambda *args: self.send_rgb(*args)
+        self.conn = f
+        rgbled.add_hook(f)
+
+    def received_message(self, message):
+        print message
+
+    def send_rgb(self, r, g, b):
+        self.send("%s,%s,%s" % (r, g, b), False)
+
+    def close(self, code, reason):
+        f = self.conn
+        try:
+            rgbled.remove_hook(f)
+        except Exception:
+            pass
+
+
 if __name__ == '__main__':
     cp_logger = logging.getLogger('cherrypy')
     cp_logger.addHandler(logging.FileHandler('./cherrpy.log'))
@@ -245,9 +271,18 @@ if __name__ == '__main__':
     conf = {
         '/': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': WWW_DIR
-        }
+            'tools.staticdir.dir': WWW_DIR,
+        },
+        '/ws': {
+            'tools.websocket.on': True,
+            'tools.websocket.handler_cls': LedWebSocket
+        },
     }
+
+    # WebSocket setup
+    WebSocketPlugin(cherrypy.engine).subscribe()
+    cherrypy.tools.websocket = WebSocketTool()
+
     cherrypy.quickstart(root=LedControlServer(), script_name='/lights', config=conf)
 
 

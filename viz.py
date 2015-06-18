@@ -19,10 +19,15 @@ BANDWIDTH = float(SAMPLE_RATE)/SAMPLE_SIZE
 
 # Run `pacmd list-sinks` to find this info
 PULSE_DEVICE = 'alsa_output.pci-0000_05_00.1.hdmi-stereo-extra1.monitor'
+# NOTE(ali): move to config variable (or remove lol)
 
 def read_samples():
     chunk_sz = int(SAMPLE_SIZE - 1) * 2
-    cmd = ['parec', '--format=s16le', '--device', PULSE_DEVICE]
+    #cmd = ['parec', '--format=s16le', '--device', PULSE_DEVICE]
+    cmd = [
+        'sox', '-q', '--buffer', '250', '-D', '--rate', str(SAMPLE_RATE),
+        '-d', '--rate', str(SAMPLE_RATE), '-L', '-t', 's16', '-'
+    ]
     proc = Popen(cmd, stdout=PIPE)
     while proc.poll() is None:
         raw_data = proc.stdout.read(chunk_sz)

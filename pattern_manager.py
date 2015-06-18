@@ -10,21 +10,78 @@ import sys
 import threading
 import time
 import traceback
+import tempfile
+import stat
+import logging
 from subprocess import Popen, PIPE
 
 import decorators
 import settings
 
+LOG = logging.getLogger('ledcontrol')
 
 def git(*args):
     git_dir = os.path.join(settings.PATTERN_DIR, '.git')
     cmd = ['git', '--git-dir', git_dir]
     cmd.extend(args)
-    proc = Popen(cmd, cwd=settings.PATTERN_DIR + '/', stdout=PIPE, stderr=PIPE)
+    proc = Popen(cmd, cwd=settings.PATTERN_DIR, stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
     if proc.returncode != 0:
-        raise Exception(stderr)
+        raise Exception(stdout + stderr)
     return stdout
+
+
+class ScriptRunner(object):
+    def __init__(self, pattern, set_color):
+        self.pattern = pattern
+        self.set_color = set_color
+        self.proc = None
+        self.log_lines = []
+        self.t = None
+        
+    @property
+    def is_running(self):
+        try:
+            return self.proc.poll() is None
+        except Exception:
+            return False
+        
+    def get_status(self):
+        return {
+            'running': self.is_running,
+            'duration': 1,
+            'err_info': ''.join(self.log_lines)
+        }
+        
+    def start(self):
+        temp = tempfile.NamedTemporaryFile().name
+        with open(temp, 'w') as fobj:
+            fobj.write(self.pattern)
+        os.chmod(temp, stat.S_IEXEC ^ stat.S_IREAD)
+        set_color = self.set_color
+        proc = Popen(['stdbuf', '-o', 'L', temp], cwd=settings.PATTERN_DIR, stdout=PIPE)
+        self.proc = proc
+        def watcher():
+            while proc.poll() is None:
+                line = proc.stdout.readline()
+                if line.startswith('color:'):
+                    color_str = line.partition(':')[2]
+                    color = [int(x.strip()) for x in color_str.split(',')]
+                    set_color(*color)
+                else:
+                    self.log_lines.append(line)
+        t = threading.Thread(target=watcher)
+        t.daemon = True
+        t.start()
+        self.t = t
+        
+    def stop(self):
+        if self.proc:
+            try:
+                self.proc.terminate()
+                self.proc.wait()
+            except Exception:
+                LOG.warning('stop failed: %s', traceback.format_exc())
 
 
 class PatternRunner(object):
@@ -192,9 +249,9 @@ class Manager(object):
                 git('status')
             except Exception:
                 git('init')
-            git('reset')
-            git('add', path)
-            git('commit', '-m', 'updated pattern "%s"' % name)
+            #git('reset')
+            #git('add', path)
+            #git('commit', '-m', 'updated pattern "%s"' % name)
         finally:
             self.lock.release()
 
@@ -242,7 +299,10 @@ class Manager(object):
             pattern = self.__get_pattern(name)
             strip = self.server.get_strip()
             self.current_name = name
-            self.current = PatternRunner(pattern, strip.set_color)
+            if pattern.partition('\n')[0].startswith('#!'):
+                self.current = ScriptRunner(pattern, strip.set_color)
+            else:
+                self.current = PatternRunner(pattern, strip.set_color)
             self.current.start()
         finally:
             self.lock.release()

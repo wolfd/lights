@@ -3,21 +3,69 @@
     <head>
         <title>Pattern Catalog</title>
         <script src="jquery.js" type="text/javascript" charset="utf-8"></script>
+        <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+        <style type="text/css">
+            .button-header {
+                display: inline-block;
+            }
+            #ws-led {
+                width: 100%;
+                height: 200px;
+                display: block;
+            }
+        </style>
     </head>
     <body>
-        Patterns:
-        <ul id="patternList"></ul>
-        Pattern Status:
-        <pre id="patternStatus" style="border:1px solid #000"></pre>
-        <hr />
-        <input type="button" id="visButton" value="Enable Music Visualizer" /><br \>
-        <hr />
-        Set a solid color
-        <div id="solidColorBg" style="border: 1px solid #000">
-        R=<input type="text" id="cr" value="0" />
-        G=<input type="text" id="cg" value="254" />
-        B=<input type="text" id="cb" value="0" />
-        <input type="button" id="colorButton" value="Set" /></div>
+        <div class="container">
+            <div class="row">
+                <span class="patterns col-md-3">
+                    <span>
+                        <h3 class="button-header">Patterns:</h3>
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#new-pattern">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                        <div id="new-pattern" class="modal fade">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                        <h4 class="modal-title">Add Pattern</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label>Enter name for new pattern:<input type="text" id="pattern-name" placeholder="pattern-name"></label>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="create_pattern($('input#pattern-name').val())">Add Pattern</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                    <ul id="patternList"></ul>
+                </span>
+                <span class="pattern-status col-md-9">
+                    <h3>Pattern Status:</h3>
+                    <pre id="patternStatus" style="border:1px solid #000"></pre>
+                    <canvas id="ws-led" width="1" height="1"></canvas>
+                </span>
+            </div>
+            <div class="row">
+                <span class="music-viz-enable col-md-12">
+                    <input type="button" id="visButton" value="Enable Music Visualizer"/>    
+                </span>
+            </div>
+            
+            <span class="solid-color">
+                <label>Set a solid color</label>
+                <div id="solidColorBg" style="border: 1px solid #000">
+                    <label>R=<input type="text" id="cr" value="0"/></label>
+                    <label>G=<input type="text" id="cg" value="254"/></label>
+                    <label>B=<input type="text" id="cb" value="0"/></label>
+                    <input type="button" id="colorButton" value="Set" />
+                </div>
+            </span>
+        </div>
         
         <script type="text/javascript">
             $('#visButton').click(function() {
@@ -43,12 +91,16 @@
             $('#cr').change(testCol);
             $('#cg').change(testCol);
             $('#cb').change(testCol);
-            
+
+            function create_pattern(name) {
+                if(name !== undefined && name !== "") {
+                    window.location = '/lights/edit.htm?name=' + name;    
+                }
+            }
+
             function runpattern(name) {
                 $.get('./pattern/run_pattern?name=' + name);
             }
-            
-            
             
             function onPatternStatus(data) {
                 $('#patternStatus').text(data);
@@ -82,6 +134,79 @@
                     ul.appendChild(li);
                 }
             });
+
+            var check_connection = function () {
+                var state = socket.readyState;
+                switch (state) {
+                    case 0: // CONNNECTING
+                        console.log('Connecting...');
+                        break;
+                    case 1: // OPEN
+                        break;
+                    case 2: // CLOSING
+                        console.log('Closing...');
+                        break;
+                    case 3: // CLOSED
+                        // attempt to reconnect on close.
+                        console.log('Reconnecting...');
+                        web_socket_connect();
+                        break;
+                }
+            };
+
+            var loc = window.location, ws_url;
+            if (loc.protocol === "https:") {
+                ws_url = "wss:";
+            } else {
+                ws_url = "ws:";
+            }
+            ws_url += "//" + loc.host + "/lights/ws";
+
+            var web_socket_connect = function () {
+                socket = new WebSocket(ws_url);
+                // Handle socket messages
+                socket.onmessage = web_socket_on_message;
+            };
+
+            web_socket_on_message = function(event) {
+                cur_color = event.data;
+            };
+
+            web_socket_connect();
+
+            setInterval(check_connection, 3000);
+
+            var elem = $("canvas#ws-led")[0];
+            var ctx = elem.getContext("2d");
+
+            cur_color = "0,0,0";
+            last_color = cur_color;
+
+            update_color = function() {
+                window.requestAnimationFrame(update_color);
+                if(cur_color === last_color) {
+                    return;
+                }
+                else {
+                    last_color = cur_color;
+                }
+
+                ctx.rect(0,0,1,1);
+                ctx.fillStyle = "rgb(" + color_transform(cur_color) + ")";
+                ctx.fill();
+            };
+
+            // Make color a bit brighter to simulate LEDs
+            color_transform = function(rgb) {
+                var transformed = rgb.split(",");
+                transformed = transformed.map(function(v) { return Math.floor(Math.sqrt(v/255)*255); });
+                return transformed.join(",");
+            }
+
+            window.requestAnimationFrame(update_color);
+
+
         </script>
+        <script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
     </body>
 </html>

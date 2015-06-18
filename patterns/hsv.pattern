@@ -10,7 +10,7 @@ inc = 0.0
 
 while True:
     for val in STEPS:
-        inc = inc + 0.005
+        inc = inc + 0.0005
         hue = (float(val) / steps)
         sat = (math.cos(inc * 2.0 * math.pi * 2.0) + 1.0) / 2.0
         r, g, b = colorsys.hsv_to_rgb(hue, sat, 1.0)

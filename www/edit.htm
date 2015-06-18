@@ -5,7 +5,7 @@
 <style type="text/css" media="screen">
     #editor {
         width: 100%;
-        height: 800px;
+        height: 600px;
     }
 </style>
 </head>
@@ -36,6 +36,27 @@
 
     $.get(uri, function(data) {
         editor.getSession().setValue(data);
+        var lines = data.split('\n');
+        if (lines.length > 0) {
+            if (lines[0].indexOf('#') === 0) {
+                var shebang = lines[0];
+                if(shebang.indexOf('node') !== -1) {
+                    editor.getSession().setMode("ace/mode/javascript");
+                }
+                else if(shebang.indexOf('racket') !== -1) {
+                    editor.getSession().setMode("ace/mode/scheme");
+                }
+                else if(shebang.indexOf('ruby') !== -1) {
+                    editor.getSession().setMode("ace/mode/ruby");
+                }
+                else if(shebang.indexOf('sh') !== -1) {
+                    editor.getSession().setMode("ace/mode/sh");
+                }
+            }
+        }
+        
+        
+        
     });
 
     $('#saveButton').click(function() {

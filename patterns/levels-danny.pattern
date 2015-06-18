@@ -9,7 +9,7 @@ prev_bass = [0 for n in range(10)]
 prev_mid = [0 for n in range(10)]
 prev_treb = [0 for n in range(10)]
 
-fuck = .4
+fuck = .6
 
 for fft_avgs in viz_data():
     cur_max = max(fft_avgs)
@@ -37,4 +37,4 @@ for fft_avgs in viz_data():
     treb = avg([3/(len(prev_treb) - (i * fuck)) * x for i,x in enumerate(prev_treb)])
     treb_i = int(min(treb * 1000, 255))
     
-    set_color(bass_i, mid_i/4, treb_i/4)#int(mid * 255), int(treb * 255))
+    set_color(bass_i, mid_i/2, treb_i/4)

@@ -1,6 +1,14 @@
+#!/bin/bash
 
-raise Exception('fuuuu')
 
-#cool
+for i in `seq 1 250`;
+do
+    echo "color: 255,0,0"
+    sleep 0.01
+    echo "color: 0,0,0"
+    sleep 0.01
+    echo 'hi'
+done    
 
-set_color(50, 50, 50)
+
+
