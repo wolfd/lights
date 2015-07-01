@@ -7,15 +7,15 @@ import decorators
 
 class Manager(object):
     """
-        Sets strips to solid colors.
+        Sets all lights to solid colors.
     """
     def __init__(self, server):
         self.server = server
         self.lock = threading.RLock()
         
-    def release_strip(self):
+    def release_dispatcher(self):
         """
-            Releases the strip
+            Releases the dispatcher
         """
         self.lock.acquire()
         self.lock.release()
@@ -30,7 +30,7 @@ class Manager(object):
     @decorators.expose(output=None)
     def set_color(self, red, green, blue):
         """
-            Sets the strip to an RGB color.
+            Sets all the lights to an RGB color.
             
             Arguments:
                 red - (int) from 0-254
@@ -39,6 +39,6 @@ class Manager(object):
         """
         self.lock.acquire()
         try:
-            self.server.get_strip().set_color(int(red), int(green), int(blue))
+            self.server.get_dispatcher().set_color(int(red), int(green), int(blue))
         finally:
             self.lock.release()

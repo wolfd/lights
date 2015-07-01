@@ -117,11 +117,14 @@ class PatternRunner(object):
         """
         cherrypy.engine.signal_handler.unsubscribe()
         cherrypy.server.unsubscribe()
-        
+
         locs = locals().copy()
         globs = globals().copy()
-        fix = lambda x: min(255, max(0, int(x)))
-        globs['set_color'] = lambda r, g, b: col_queue.put((fix(r), fix(g), fix(b)))
+
+        def script_set_color(r, g, b, name=None):
+            col_queue.put((r, g, b, name))
+
+        globs['set_color'] = script_set_color
         try:
             exec pattern in globs, locs
         except Exception:
@@ -146,7 +149,7 @@ class PatternRunner(object):
                 time.sleep(.001)
             else:
                 col_tuple = col_queue.get()
-                set_color(*col_tuple)
+                set_color(*col_tuple[:-1], name=col_tuple[-1])
         self.ended = time.time()
         if proc.exitcode == 2:
             self.err_info = ret_queue.get()
@@ -211,10 +214,10 @@ class Manager(object):
         with open(path, 'r') as fobj:
             return fobj.read()
 
-    def release_strip(self):
+    def release_dispatcher(self):
         """
-            Called by the controller to tell the manager to release the strip
-            gracefully.
+            Called by the controller to tell the manager to release the
+            dispatcher gracefully.
         """
         self.lock.acquire()
         try:
@@ -297,12 +300,12 @@ class Manager(object):
         self.lock.acquire()
         try:
             pattern = self.__get_pattern(name)
-            strip = self.server.get_strip()
+            dispatcher = self.server.get_dispatcher()
             self.current_name = name
             if pattern.partition('\n')[0].startswith('#!'):
-                self.current = ScriptRunner(pattern, strip.set_color)
+                self.current = ScriptRunner(pattern, dispatcher.set_color)
             else:
-                self.current = PatternRunner(pattern, strip.set_color)
+                self.current = PatternRunner(pattern, dispatcher.set_color)
             self.current.start()
         finally:
             self.lock.release()

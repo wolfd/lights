@@ -18,13 +18,15 @@ from ws4py.websocket import WebSocket
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 
 # project modules
-import rgbled
+from dispatcher import Dispatcher
 import settings
 
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
 WWW_DIR = os.path.join(SERVER_DIR, 'www')
 
 LOG = logging.getLogger('ledcontrol')
+
+dispatcher = Dispatcher()
 
 
 def mimetype(mimeval):
@@ -191,7 +193,7 @@ class LedControlServer(object):
     """
     def __init__(self):
         self.lock = threading.RLock()
-        self.strip = rgbled.Strip(settings.SERIAL_DEV)
+        self.dispatcher = dispatcher
         self.managers = {}
         self.dispatchers = {}
         for name, module in settings.MANAGERS.iteritems():
@@ -216,15 +218,15 @@ class LedControlServer(object):
     def ws(self):
         handler = cherrypy.request.ws_handler
 
-    def get_strip(self):
+    def get_dispatcher(self):
         """
-            Releases the strip from all managers
+            Releases the dispatcher from all managers
         """
         self.lock.acquire()
         try:
             for manager in self.managers.itervalues():
-                manager.release_strip()
-            return self.strip
+                manager.release_dispatcher()
+            return self.dispatcher
         finally:
             self.lock.release()
 
@@ -236,9 +238,9 @@ class LedControlServer(object):
 
 class LedWebSocket(WebSocket):
     def opened(self):
-        f = lambda *args: self.send_rgb(*args)
+        f = lambda *args, **kwargs: self.send_rgb(*args, **kwargs)
         self.conn = f
-        rgbled.add_hook(f)
+        dispatcher.add_hook(None, f)
 
     def received_message(self, message):
         print message
@@ -249,7 +251,7 @@ class LedWebSocket(WebSocket):
     def close(self, code, reason):
         f = self.conn
         try:
-            rgbled.remove_hook(f)
+            dispatcher.remove_hook(f)
         except Exception:
             pass
 
