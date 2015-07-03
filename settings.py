@@ -19,4 +19,10 @@ MANAGERS = {
 LIGHTS = {
     'strip': Strip(dev=SERIAL_DEV),
     'hue': HueLight(bridge_ip='192.168.3.240', light_ids=[1,2,3,4], transition_time=2),
+    '1': HueLight(bridge_ip='192.168.3.240', light_ids=1, transition_time=2),
+    '2': HueLight(bridge_ip='192.168.3.240', light_ids=2, transition_time=2),
+    '3': HueLight(bridge_ip='192.168.3.240', light_ids=3, transition_time=2),
+    '4': HueLight(bridge_ip='192.168.3.240', light_ids=4, transition_time=2),
+    'hue-left': HueLight(bridge_ip='192.168.3.240', light_ids=[1,4], transition_time=2),
+    'hue-right': HueLight(bridge_ip='192.168.3.240', light_ids=[2,3], transition_time=2),
 }

@@ -3,6 +3,10 @@
 <head>
 <title>Edit Dem Lights</title>
 <style type="text/css" media="screen">
+    body {
+        margin: 0;
+        padding: 0;
+    }
     #editor {
         width: 100%;
         height: 600px;
@@ -13,7 +17,7 @@
 
 <div id="editor">
 </div>
-<input type="button" id="saveButton" value="Save & Run" />
+<input type="button" id="saveButton" value="Save & Run" />&nbsp;or hit ctrl-s
 <script src="jquery.js" type="text/javascript" charset="utf-8"></script>
 <script src="ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
@@ -59,12 +63,33 @@
         
     });
 
-    $('#saveButton').click(function() {
+    function resizeAce() {
+      return $('#editor').height($(window).height() - $('#saveButton').height() - 10);
+    };
+    //listen for changes
+    $(window).resize(resizeAce);
+    //set initially
+    resizeAce();
+
+    doSave = function() {
         var uri = './pattern/save_pattern';
         $.post(uri, {'name': script, 'text': editor.getSession().getValue()}, function(){
             $.get('./pattern/run_pattern?name=' + script);
         });
-    });
+    };
+
+    $('#saveButton').click(doSave);
+
+    $(window).bind('keydown', function(event) {
+    if (event.ctrlKey || event.metaKey) {
+        switch (String.fromCharCode(event.which).toLowerCase()) {
+        case 's':
+            event.preventDefault();
+            doSave();
+            break;
+        }
+    }
+});
 
 
 </script>

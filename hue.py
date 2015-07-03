@@ -1,6 +1,7 @@
 import logging
 import time
 from phue import Bridge
+import colorsys
 from colorpy import colormodels
 
 LOG = logging.getLogger('ledcontrol')
@@ -17,6 +18,7 @@ class HueLight(object):
         self.b = Bridge(self.bridge_ip)
         self.b.set_light(self.light_ids, {
             'on': True,
+            'transitiontime': self.transition_time,
         })
 
     def set_color(self, r, g, b):
@@ -25,7 +27,6 @@ class HueLight(object):
             xyz = colormodels.xyz_from_rgb(rgb)
             xyz = colormodels.xyz_normalize(xyz)
             command = {
-                'transitiontime': self.transition_time,
                 'xy': [xyz[0], xyz[1]],
             }
             self.b.set_light(self.light_ids, command)

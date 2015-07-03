@@ -240,7 +240,7 @@ class LedWebSocket(WebSocket):
     def opened(self):
         f = lambda *args, **kwargs: self.send_rgb(*args, **kwargs)
         self.conn = f
-        dispatcher.add_hook(None, f)
+        dispatcher.add_hook('strip', f)
 
     def received_message(self, message):
         print message
